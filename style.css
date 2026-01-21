@@ -1,0 +1,892 @@
+/* ========================================
+   HYPE-MAN STUDIO - Comic Photo Booth
+   Dark Neon-Industrial Theme
+======================================== */
+
+:root {
+    /* Core Colors */
+    --bg-dark: #0a0a0f;
+    --bg-darker: #050508;
+    --surface: #12121a;
+
+    /* Neon Accents */
+    --neon-cyan: #00f0ff;
+    --neon-magenta: #ff00aa;
+    --neon-yellow: #f0f000;
+    --neon-green: #00ff88;
+    --neon-orange: #ff6600;
+
+    /* Comic Colors */
+    --comic-red: #ff3333;
+    --comic-blue: #3366ff;
+    --comic-white: #ffffff;
+
+    /* WhatsApp */
+    --whatsapp-green: #25D366;
+
+    /* Instagram Gradient */
+    --ig-purple: #833AB4;
+    --ig-red: #FD1D1D;
+    --ig-orange: #F77737;
+
+    /* Typography */
+    --font-comic: 'Bangers', cursive;
+    --font-ui: 'Poppins', sans-serif;
+
+    /* Spacing */
+    --control-height: 80px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-dark);
+    font-family: var(--font-ui);
+}
+
+/* ========================================
+   CAMERA CONTAINER
+======================================== */
+
+#camera-container {
+    position: fixed;
+    inset: 0;
+    bottom: var(--control-height);
+    background: var(--bg-darker);
+    overflow: hidden;
+}
+
+#webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror effect */
+    filter: contrast(1.4) saturate(0.3) brightness(1.1);
+}
+
+#filter-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    opacity: 0;
+    /* Hidden, used for processing */
+}
+
+/* Halftone Dot Overlay */
+#halftone-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
+    background-size: 4px 4px;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+}
+
+/* Vignette Effect */
+#vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+            transparent 40%,
+            rgba(0, 0, 0, 0.6) 100%);
+    pointer-events: none;
+}
+
+/* ========================================
+   HYPE WORDS CONTAINER
+======================================== */
+
+#hype-words-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hype-word {
+    position: absolute;
+    font-family: var(--font-comic);
+    font-size: clamp(2rem, 8vw, 5rem);
+    color: var(--comic-white);
+    text-shadow:
+        4px 4px 0 var(--neon-magenta),
+        -2px -2px 0 var(--neon-cyan),
+        0 0 20px var(--neon-yellow);
+    transform: rotate(var(--rotation)) scale(0);
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
+        float 3s ease-in-out infinite 0.5s,
+        fadeOut 0.5s ease-out 4s forwards;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    -webkit-text-stroke: 2px var(--bg-dark);
+}
+
+.hype-word.pow {
+    color: var(--neon-yellow);
+    text-shadow:
+        4px 4px 0 var(--comic-red),
+        -2px -2px 0 var(--neon-orange),
+        0 0 30px var(--neon-yellow);
+}
+
+.hype-word.boom {
+    color: var(--neon-cyan);
+    text-shadow:
+        4px 4px 0 var(--neon-magenta),
+        -2px -2px 0 var(--comic-blue),
+        0 0 30px var(--neon-cyan);
+}
+
+.hype-word.zap {
+    color: var(--neon-magenta);
+    text-shadow:
+        4px 4px 0 var(--neon-cyan),
+        -2px -2px 0 var(--neon-yellow),
+        0 0 30px var(--neon-magenta);
+}
+
+/* Speech Bubble for some words */
+.hype-word.bubble {
+    background: var(--comic-white);
+    color: var(--bg-dark);
+    padding: 10px 25px;
+    border-radius: 20px;
+    border: 4px solid var(--bg-dark);
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+    box-shadow:
+        5px 5px 0 var(--bg-dark),
+        0 0 20px var(--neon-cyan);
+}
+
+.hype-word.bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 20%;
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 15px solid var(--comic-white);
+}
+
+@keyframes popIn {
+    0% {
+        transform: rotate(var(--rotation)) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: rotate(var(--rotation)) scale(1.3);
+    }
+
+    100% {
+        transform: rotate(var(--rotation)) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: rotate(var(--rotation)) scale(1) translateY(0);
+    }
+
+    50% {
+        transform: rotate(var(--rotation)) scale(1) translateY(-10px);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: rotate(var(--rotation)) scale(0.5);
+    }
+}
+
+/* Starburst effect behind words */
+.starburst {
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    top: -25%;
+    left: -25%;
+    background: conic-gradient(from 0deg,
+            var(--neon-yellow) 0deg,
+            transparent 30deg,
+            var(--neon-yellow) 60deg,
+            transparent 90deg,
+            var(--neon-yellow) 120deg,
+            transparent 150deg,
+            var(--neon-yellow) 180deg,
+            transparent 210deg,
+            var(--neon-yellow) 240deg,
+            transparent 270deg,
+            var(--neon-yellow) 300deg,
+            transparent 330deg,
+            var(--neon-yellow) 360deg);
+    opacity: 0.3;
+    z-index: -1;
+    animation: spin 10s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   CONTROLS PANEL
+======================================== */
+
+#controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    min-height: var(--control-height);
+    background: linear-gradient(to top,
+            var(--bg-darker) 0%,
+            var(--surface) 100%);
+    border-top: 2px solid var(--neon-cyan);
+    padding: 15px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 100;
+    box-shadow: 0 -10px 40px rgba(0, 240, 255, 0.2);
+}
+
+.input-group {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    max-width: 400px;
+    min-width: 250px;
+}
+
+#hype-input {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-family: var(--font-comic);
+    background: var(--bg-dark);
+    border: 2px solid var(--neon-magenta);
+    border-radius: 50px;
+    color: var(--comic-white);
+    outline: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#hype-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+#hype-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow:
+        0 0 20px rgba(0, 240, 255, 0.4),
+        inset 0 0 10px rgba(0, 240, 255, 0.1);
+}
+
+/* Neon Buttons */
+.neon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-family: var(--font-comic);
+    font-size: 1rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.neon-btn.primary {
+    background: linear-gradient(135deg, var(--neon-magenta), var(--neon-cyan));
+    color: var(--bg-dark);
+    font-weight: 700;
+    box-shadow:
+        0 4px 20px rgba(255, 0, 170, 0.4),
+        0 0 40px rgba(0, 240, 255, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.neon-btn.primary:hover {
+    transform: scale(1.05);
+    box-shadow:
+        0 6px 30px rgba(255, 0, 170, 0.6),
+        0 0 60px rgba(0, 240, 255, 0.4);
+}
+
+.neon-btn.primary:active {
+    transform: scale(0.95);
+}
+
+.neon-btn.secondary {
+    background: var(--surface);
+    color: var(--neon-yellow);
+    border: 2px solid var(--neon-yellow);
+}
+
+.neon-btn.secondary:hover {
+    background: var(--neon-yellow);
+    color: var(--bg-dark);
+    box-shadow: 0 0 20px var(--neon-yellow);
+}
+
+.neon-btn.whatsapp {
+    background: var(--whatsapp-green);
+    color: white;
+    font-family: var(--font-ui);
+    font-weight: 600;
+}
+
+.neon-btn.whatsapp:hover {
+    box-shadow: 0 0 25px var(--whatsapp-green);
+    transform: scale(1.05);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 4px 20px rgba(255, 0, 170, 0.4),
+            0 0 40px rgba(0, 240, 255, 0.2);
+    }
+
+    50% {
+        box-shadow:
+            0 4px 30px rgba(255, 0, 170, 0.6),
+            0 0 60px rgba(0, 240, 255, 0.4);
+    }
+}
+
+/* ========================================
+   SHARE POPUP
+======================================== */
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.popup-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.popup-content {
+    background: linear-gradient(145deg,
+            rgba(18, 18, 26, 0.95),
+            rgba(10, 10, 15, 0.98));
+    border: 2px solid var(--neon-cyan);
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 90%;
+    max-height: 90vh;
+    width: 420px;
+    text-align: center;
+    position: relative;
+    box-shadow:
+        0 0 60px rgba(0, 240, 255, 0.3),
+        inset 0 0 30px rgba(0, 240, 255, 0.05);
+    animation: popupSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow-y: auto;
+}
+
+@keyframes popupSlide {
+    from {
+        transform: translateY(50px) scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    background: var(--surface);
+    border: 2px solid var(--neon-magenta);
+    border-radius: 50%;
+    color: var(--neon-magenta);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    background: var(--neon-magenta);
+    color: var(--bg-dark);
+    transform: rotate(90deg);
+}
+
+.popup-content h2 {
+    font-family: var(--font-comic);
+    font-size: 2rem;
+    color: var(--neon-yellow);
+    text-shadow: 2px 2px 0 var(--neon-magenta);
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+}
+
+#preview-container {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid var(--neon-magenta);
+    margin-bottom: 20px;
+    background: var(--bg-dark);
+}
+
+#preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.share-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.share-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.share-btn.whatsapp {
+    background: var(--whatsapp-green);
+    color: white;
+}
+
+.share-btn.whatsapp:hover {
+    box-shadow: 0 0 30px var(--whatsapp-green);
+    transform: translateY(-2px);
+}
+
+.share-btn.instagram {
+    background: linear-gradient(135deg,
+            var(--ig-purple),
+            var(--ig-red),
+            var(--ig-orange));
+    color: white;
+}
+
+.share-btn.instagram:hover {
+    box-shadow: 0 0 30px var(--ig-red);
+    transform: translateY(-2px);
+}
+
+.hint {
+    margin-top: 15px;
+    padding: 12px 16px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid var(--neon-green);
+    border-radius: 8px;
+    color: var(--neon-green);
+    font-size: 0.9rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.hint.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
+
+@media (max-width: 600px) {
+    #controls {
+        padding: 12px 15px;
+        gap: 10px;
+    }
+
+    .input-group {
+        width: 100%;
+        max-width: none;
+    }
+
+    .neon-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+
+    .neon-btn.primary {
+        flex: 1;
+    }
+
+    .neon-btn.whatsapp {
+        flex: 1;
+    }
+
+    .hype-word {
+        font-size: clamp(1.5rem, 6vw, 3rem);
+    }
+
+    .popup-content {
+        padding: 20px;
+    }
+
+    .popup-content h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ========================================
+   LOADING STATE
+======================================== */
+
+.loading {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    gap: 20px;
+}
+
+.loading-text {
+    font-family: var(--font-comic);
+    font-size: 2rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px var(--neon-cyan);
+    animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--surface);
+    border-top-color: var(--neon-magenta);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Camera permission denied state */
+.camera-error {
+    text-align: center;
+    padding: 40px;
+}
+
+.camera-error h2 {
+    font-family: var(--font-comic);
+    color: var(--neon-magenta);
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.camera-error p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* ========================================
+   ENHANCED HYPE WORDS (PERSISTENT)
+======================================== */
+
+#hype-words-container {
+    pointer-events: all;
+}
+
+.hype-word {
+    /* Override auto-fade animation - words stay permanently */
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
+        floatGentle 4s ease-in-out infinite 0.5s;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hype-word.dragging {
+    cursor: grabbing;
+    z-index: 100;
+    transform: rotate(var(--rotation)) scale(1.1) !important;
+}
+
+.hype-word.removing {
+    animation: removeWord 0.3s ease-out forwards !important;
+}
+
+@keyframes floatGentle {
+
+    0%,
+    100% {
+        transform: rotate(var(--rotation)) scale(1) translateY(0);
+    }
+
+    50% {
+        transform: rotate(var(--rotation)) scale(1) translateY(-5px);
+    }
+}
+
+@keyframes removeWord {
+    to {
+        opacity: 0;
+        transform: rotate(var(--rotation)) scale(0) translateY(-20px);
+    }
+}
+
+/* Hype Text within word */
+.hype-text {
+    pointer-events: none;
+}
+
+/* Remove Button on Hype Words */
+.remove-word-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: var(--comic-red);
+    border: 2px solid var(--bg-dark);
+    border-radius: 50%;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 10;
+    line-height: 1;
+    padding: 0;
+}
+
+.hype-word:hover .remove-word-btn {
+    opacity: 1;
+}
+
+.remove-word-btn:hover {
+    background: #ff0000;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px var(--comic-red);
+}
+
+/* Clear All Button */
+.neon-btn.danger {
+    background: var(--surface);
+    color: var(--comic-red);
+    border: 2px solid var(--comic-red);
+    padding: 12px 14px;
+    min-width: auto;
+}
+
+.neon-btn.danger:hover {
+    background: var(--comic-red);
+    color: white;
+    box-shadow: 0 0 20px var(--comic-red);
+}
+
+/* ========================================
+   WELCOME POPUP
+======================================== */
+
+.popup-content.welcome {
+    width: 480px;
+    max-width: 95%;
+}
+
+.welcome-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.popup-content.welcome h2 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.welcome-tagline {
+    color: var(--neon-cyan);
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.welcome-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--neon-cyan);
+    transform: translateX(5px);
+}
+
+.feature-icon {
+    font-size: 1.3rem;
+    min-width: 30px;
+    text-align: center;
+}
+
+.neon-btn.large {
+    padding: 16px 40px;
+    font-size: 1.2rem;
+}
+
+/* ========================================
+   RESPONSIVE ADDITIONS
+======================================== */
+
+@media (max-width: 600px) {
+    .remove-word-btn {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+
+    .popup-content.welcome h2 {
+        font-size: 1.4rem;
+    }
+
+    .welcome-tagline {
+        font-size: 0.95rem;
+    }
+
+    .feature-item {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .neon-btn.large {
+        padding: 14px 30px;
+        font-size: 1rem;
+    }
+
+    .neon-btn.danger {
+        padding: 10px 12px;
+    }
+}
