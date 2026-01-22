@@ -1,46 +1,105 @@
 /* ========================================
-   HYPE-MAN STUDIO - JavaScript Engine
-   Comic Photo Booth with Social Sharing
+   COMIC MEDIA EDITOR - JavaScript Engine
+   Complete Photo/Video Studio with Music
 ======================================== */
 
 // ========================================
 // DOM ELEMENTS
 // ========================================
-const webcam = document.getElementById('webcam');
+
+// Media Elements
+const webcamEl = document.getElementById('webcam');
+const uploadedVideoEl = document.getElementById('uploaded-video');
+const uploadedImageEl = document.getElementById('uploaded-image');
 const filterCanvas = document.getElementById('filter-canvas');
 const captureCanvas = document.getElementById('capture-canvas');
+const canvasWrapper = document.getElementById('canvas-wrapper');
+
+// Hype Words
 const hypeContainer = document.getElementById('hype-words-container');
 const hypeInput = document.getElementById('hype-input');
-const spawnBtn = document.getElementById('spawn-btn');
-const captureBtn = document.getElementById('capture-btn');
-const whatsappBridge = document.getElementById('whatsapp-bridge');
-const sharePopup = document.getElementById('share-popup');
-const closePopupBtn = document.getElementById('close-popup');
-const previewImage = document.getElementById('preview-image');
-const shareWhatsappBtn = document.getElementById('share-whatsapp');
-const shareInstagramBtn = document.getElementById('share-instagram');
-const instagramHint = document.getElementById('instagram-hint');
-const cameraContainer = document.getElementById('camera-container');
+const addTextBtn = document.getElementById('add-text-btn');
+const clearAllBtn = document.getElementById('clear-all-btn');
+
+// Mode Controls
+const liveModeBtn = document.getElementById('live-mode-btn');
+const editorModeBtn = document.getElementById('editor-mode-btn');
+const uploadSection = document.getElementById('upload-section');
+
+// Media Upload
+const uploadMediaBtn = document.getElementById('upload-media-btn');
+const mediaInput = document.getElementById('media-input');
+const uploadedFileInfo = document.getElementById('uploaded-file-info');
+const uploadedFileName = document.getElementById('uploaded-file-name');
+const removeMediaBtn = document.getElementById('remove-media-btn');
+
+// Music Controls
+const uploadMusicBtn = document.getElementById('upload-music-btn');
+const musicInput = document.getElementById('music-input');
+const musicPlayer = document.getElementById('music-player');
+const musicName = document.getElementById('music-name');
+const playPauseBtn = document.getElementById('play-pause-btn');
+const removeMusicBtn = document.getElementById('remove-music-btn');
+
+// Capture Controls
+const photoBtn = document.getElementById('photo-btn');
+const videoBtn = document.getElementById('video-btn');
+const recordingIndicator = document.getElementById('recording-indicator');
+
+// Popups
 const welcomePopup = document.getElementById('welcome-popup');
 const welcomeStartBtn = document.getElementById('welcome-start');
-const clearAllBtn = document.getElementById('clear-all-btn');
+const successPopup = document.getElementById('success-popup');
+const closePopupBtn = document.getElementById('close-popup');
+const previewImage = document.getElementById('preview-image');
+const previewVideo = document.getElementById('preview-video');
+const processingOverlay = document.getElementById('processing-overlay');
+
+// Share Buttons
+const shareWhatsappBtn = document.getElementById('share-whatsapp');
+const shareInstagramBtn = document.getElementById('share-instagram');
+const downloadAgainBtn = document.getElementById('download-again');
+const instagramHint = document.getElementById('instagram-hint');
+const whatsappQuickBtn = document.getElementById('whatsapp-quick');
+
+// Quick Effects
+const effectBtns = document.querySelectorAll('.effect-btn');
 
 // ========================================
 // STATE
 // ========================================
-let currentImageBlob = null;
+let currentMode = 'live'; // 'live' or 'editor'
+let uploadedMedia = null;
+let uploadedMediaType = null; // 'image' or 'video'
+let audioElement = null;
+let musicFile = null;
+let currentBlob = null;
+let currentBlobType = 'image'; // 'image' or 'video'
 let stream = null;
-const websiteUrl = 'https://hypeman-studio.app'; // Replace with your actual URL
+let isRecording = false;
+let mediaRecorder = null;
 
-// Comic word variations for random spawning
-const comicEffects = ['POW!', 'BOOM!', 'ZAP!', 'WHAM!', 'BAM!', 'KAPOW!'];
+const websiteUrl = 'https://hypeman-studio.app';
 const wordStyles = ['pow', 'boom', 'zap', 'bubble'];
 
 // ========================================
-// WELCOME POPUP SYSTEM
+// INITIALIZATION
+// ========================================
+async function init() {
+    console.log('🚀 Comic Media Editor initializing...');
+
+    initEventListeners();
+    checkFirstVisit();
+    await initCamera();
+
+    console.log('✅ Comic Media Editor ready!');
+}
+
+// ========================================
+// WELCOME POPUP
 // ========================================
 function checkFirstVisit() {
-    const hasVisited = localStorage.getItem('hypeman-visited');
+    const hasVisited = localStorage.getItem('comic-editor-visited');
     if (!hasVisited) {
         showWelcomePopup();
     }
@@ -52,7 +111,7 @@ function showWelcomePopup() {
 
 function hideWelcomePopup() {
     welcomePopup.classList.add('hidden');
-    localStorage.setItem('hypeman-visited', 'true');
+    localStorage.setItem('comic-editor-visited', 'true');
 }
 
 // ========================================
@@ -63,18 +122,17 @@ async function initCamera() {
         stream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'user',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             },
             audio: false
         });
 
-        webcam.srcObject = stream;
-        await webcam.play();
+        webcamEl.srcObject = stream;
+        await webcamEl.play();
 
-        // Set canvas dimensions
-        filterCanvas.width = webcam.videoWidth;
-        filterCanvas.height = webcam.videoHeight;
+        filterCanvas.width = webcamEl.videoWidth || 1920;
+        filterCanvas.height = webcamEl.videoHeight || 1080;
 
         console.log('📸 Camera initialized successfully!');
 
@@ -85,35 +143,175 @@ async function initCamera() {
 }
 
 function showCameraError() {
-    cameraContainer.innerHTML = `
+    canvasWrapper.innerHTML = `
         <div class="camera-error">
             <h2>📷 Camera Access Needed</h2>
-            <p>Please allow camera access to use Hype-Man Studio.<br>
-            Check your browser settings and refresh the page.</p>
+            <p>Please allow camera access to use Live Mode.<br>
+            Or switch to Editor Mode to upload your photos/videos!</p>
         </div>
     `;
 }
 
+function showWebcam() {
+    webcamEl.classList.remove('hidden');
+    uploadedVideoEl.classList.add('hidden');
+    uploadedImageEl.classList.add('hidden');
+
+    if (uploadedVideoEl.src) {
+        uploadedVideoEl.pause();
+    }
+}
+
 // ========================================
-// HYPE WORDS SYSTEM (PERSISTENT)
+// MODE MANAGER
 // ========================================
-function spawnHypeWord(text, isAutoGenerated = false) {
+function setMode(mode) {
+    currentMode = mode;
+
+    // Update UI
+    liveModeBtn.classList.toggle('active', mode === 'live');
+    editorModeBtn.classList.toggle('active', mode === 'editor');
+
+    // Toggle upload section
+    uploadSection.classList.toggle('hidden', mode === 'live');
+
+    // Switch media source
+    if (mode === 'live') {
+        showWebcam();
+        stopLivePreviewAnimation();
+    } else if (uploadedMedia) {
+        showUploadedMedia();
+    }
+}
+
+// ========================================
+// MEDIA UPLOAD HANDLER
+// ========================================
+function handleMediaUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    showProcessingOverlay();
+
+    const url = URL.createObjectURL(file);
+    uploadedMediaType = file.type.startsWith('video') ? 'video' : 'image';
+    uploadedMedia = url;
+
+    // Update file info display
+    uploadedFileName.textContent = file.name;
+    uploadedFileInfo.classList.remove('hidden');
+
+    if (uploadedMediaType === 'video') {
+        uploadedVideoEl.src = url;
+        uploadedVideoEl.load();
+        uploadedVideoEl.onloadeddata = () => {
+            showUploadedMedia();
+            hideProcessingOverlay();
+        };
+    } else {
+        uploadedImageEl.src = url;
+        uploadedImageEl.onload = () => {
+            showUploadedMedia();
+            hideProcessingOverlay();
+            startLivePreviewAnimation();
+        };
+    }
+}
+
+function showUploadedMedia() {
+    webcamEl.classList.add('hidden');
+
+    if (uploadedMediaType === 'video') {
+        uploadedVideoEl.classList.remove('hidden');
+        uploadedImageEl.classList.add('hidden');
+        uploadedVideoEl.play();
+        stopLivePreviewAnimation();
+    } else {
+        uploadedImageEl.classList.remove('hidden');
+        uploadedVideoEl.classList.add('hidden');
+        startLivePreviewAnimation();
+    }
+}
+
+function removeUploadedMedia() {
+    if (uploadedMedia) {
+        URL.revokeObjectURL(uploadedMedia);
+    }
+    uploadedMedia = null;
+    uploadedMediaType = null;
+
+    uploadedVideoEl.src = '';
+    uploadedImageEl.src = '';
+    uploadedFileInfo.classList.add('hidden');
+    mediaInput.value = '';
+
+    webcamEl.classList.remove('hidden');
+    uploadedVideoEl.classList.add('hidden');
+    uploadedImageEl.classList.add('hidden');
+
+    stopLivePreviewAnimation();
+}
+
+// ========================================
+// MUSIC MANAGER
+// ========================================
+function handleMusicUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    musicFile = file;
+    audioElement = new Audio(URL.createObjectURL(file));
+    audioElement.loop = true;
+
+    // Truncate long names
+    const displayName = file.name.length > 20
+        ? file.name.substring(0, 17) + '...'
+        : file.name;
+    musicName.textContent = displayName;
+    musicPlayer.classList.remove('hidden');
+}
+
+function toggleMusicPlayback() {
+    if (!audioElement) return;
+
+    if (audioElement.paused) {
+        audioElement.play();
+        playPauseBtn.textContent = '⏸️';
+    } else {
+        audioElement.pause();
+        playPauseBtn.textContent = '▶️';
+    }
+}
+
+function removeMusic() {
+    if (audioElement) {
+        audioElement.pause();
+        URL.revokeObjectURL(audioElement.src);
+        audioElement = null;
+    }
+    musicFile = null;
+    musicPlayer.classList.add('hidden');
+    musicInput.value = '';
+    playPauseBtn.textContent = '▶️';
+}
+
+// ========================================
+// HYPE WORDS SYSTEM
+// ========================================
+function spawnHypeWord(text) {
     const word = document.createElement('div');
     word.className = 'hype-word';
-    if (isAutoGenerated) {
-        word.classList.add('auto-generated');
-    }
 
     // Add random style
     const randomStyle = wordStyles[Math.floor(Math.random() * wordStyles.length)];
     word.classList.add(randomStyle);
 
     // Random position (avoiding edges)
-    const x = 10 + Math.random() * 70; // 10-80% from left
-    const y = 10 + Math.random() * 60; // 10-70% from top
+    const x = 10 + Math.random() * 70;
+    const y = 10 + Math.random() * 60;
 
     // Random rotation
-    const rotation = -20 + Math.random() * 40; // -20 to +20 degrees
+    const rotation = -20 + Math.random() * 40;
 
     word.style.left = `${x}%`;
     word.style.top = `${y}%`;
@@ -144,13 +342,13 @@ function spawnHypeWord(text, isAutoGenerated = false) {
         word.insertBefore(starburst, textSpan);
     }
 
-    // Make word draggable
+    // Apply pulse effect for static images
+    if (currentMode === 'editor' && uploadedMediaType === 'image') {
+        word.classList.add('pulse-effect');
+    }
+
     makeDraggable(word);
-
     hypeContainer.appendChild(word);
-
-    // Words stay on screen permanently until removed or capture
-    // No auto-remove timeout
 }
 
 function makeDraggable(element) {
@@ -210,9 +408,12 @@ function makeDraggable(element) {
     }
 }
 
-function addRandomComicEffect() {
-    const effect = comicEffects[Math.floor(Math.random() * comicEffects.length)];
-    spawnHypeWord(effect, true);
+function handleHypeInput() {
+    const text = hypeInput.value.trim();
+    if (text) {
+        spawnHypeWord(text);
+        hypeInput.value = '';
+    }
 }
 
 function clearAllHypeWords() {
@@ -225,52 +426,97 @@ function clearAllHypeWords() {
     });
 }
 
-// Handle user input
-function handleHypeInput() {
-    const text = hypeInput.value.trim();
-    if (text) {
-        spawnHypeWord(text, false);
-        hypeInput.value = '';
-    }
+// ========================================
+// LIVE PREVIEW ANIMATION
+// ========================================
+function startLivePreviewAnimation() {
+    const words = hypeContainer.querySelectorAll('.hype-word');
+    words.forEach(word => word.classList.add('pulse-effect'));
+}
+
+function stopLivePreviewAnimation() {
+    const words = hypeContainer.querySelectorAll('.hype-word');
+    words.forEach(word => word.classList.remove('pulse-effect'));
 }
 
 // ========================================
-// CAPTURE SYSTEM
+// PROCESSING OVERLAY
 // ========================================
-async function captureHype() {
+function showProcessingOverlay() {
+    processingOverlay.classList.remove('hidden');
+}
+
+function hideProcessingOverlay() {
+    processingOverlay.classList.add('hidden');
+}
+
+// ========================================
+// PHOTO CAPTURE
+// ========================================
+async function capturePhoto() {
+    photoBtn.disabled = true;
+    photoBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Capturing...</span>';
+
+    // Flash effect
+    createFlashEffect();
+
+    try {
+        const blob = await renderToBlob();
+        currentBlob = blob;
+        currentBlobType = 'image';
+
+        // Auto download
+        downloadFile(blob, 'comic-photo.png');
+
+        // Show success popup
+        showSuccessPopup(blob, 'image');
+
+    } catch (error) {
+        console.error('Capture error:', error);
+        alert('Failed to capture. Please try again!');
+    }
+
+    photoBtn.disabled = false;
+    photoBtn.innerHTML = '<span class="btn-icon">📸</span><span class="btn-text">Take Photo</span>';
+}
+
+async function renderToBlob() {
     const ctx = captureCanvas.getContext('2d');
+    const containerRect = canvasWrapper.getBoundingClientRect();
 
-    // Get container dimensions
-    const containerRect = cameraContainer.getBoundingClientRect();
-    captureCanvas.width = containerRect.width * 2; // Higher res
-    captureCanvas.height = containerRect.height * 2;
+    // Higher resolution
+    const scale = 2;
+    captureCanvas.width = containerRect.width * scale;
+    captureCanvas.height = containerRect.height * scale;
+    ctx.scale(scale, scale);
 
-    // Scale context
-    ctx.scale(2, 2);
+    // Get the active media element
+    let mediaElement;
+    if (currentMode === 'live') {
+        mediaElement = webcamEl;
+    } else if (uploadedMediaType === 'video') {
+        mediaElement = uploadedVideoEl;
+    } else {
+        mediaElement = uploadedImageEl;
+    }
 
-    // Draw video (mirrored to match preview)
+    // Draw media (mirrored for webcam)
     ctx.save();
-    ctx.translate(containerRect.width, 0);
-    ctx.scale(-1, 1);
-
-    // Apply comic filter effect manually
+    if (currentMode === 'live') {
+        ctx.translate(containerRect.width, 0);
+        ctx.scale(-1, 1);
+    }
     ctx.filter = 'contrast(1.4) saturate(0.3) brightness(1.1)';
-    ctx.drawImage(webcam, 0, 0, containerRect.width, containerRect.height);
+    ctx.drawImage(mediaElement, 0, 0, containerRect.width, containerRect.height);
     ctx.restore();
 
-    // Draw halftone overlay effect
+    // Draw overlays
     drawHalftoneOverlay(ctx, containerRect.width, containerRect.height);
-
-    // Draw vignette
     drawVignette(ctx, containerRect.width, containerRect.height);
-
-    // Draw hype words
     await drawHypeWords(ctx, containerRect);
 
-    // Convert to blob
     return new Promise((resolve) => {
         captureCanvas.toBlob((blob) => {
-            currentImageBlob = blob;
             resolve(blob);
         }, 'image/png', 1.0);
     });
@@ -317,11 +563,9 @@ async function drawHypeWords(ctx, containerRect) {
         const textSpan = word.querySelector('.hype-text');
         const text = textSpan ? textSpan.textContent : word.textContent;
 
-        // Calculate relative position
         const x = wordRect.left - containerRect.left + wordRect.width / 2;
         const y = wordRect.top - containerRect.top + wordRect.height / 2;
 
-        // Get rotation
         const transform = style.transform;
         let rotation = 0;
         if (transform !== 'none') {
@@ -336,12 +580,11 @@ async function drawHypeWords(ctx, containerRect) {
         ctx.translate(x, y);
         ctx.rotate(rotation);
 
-        // Style the text
         ctx.font = `bold ${parseInt(style.fontSize)}px Bangers, cursive`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Draw shadow/stroke
+        // Draw stroke
         ctx.strokeStyle = '#0a0a0f';
         ctx.lineWidth = 4;
         ctx.strokeText(text, 0, 0);
@@ -362,12 +605,7 @@ async function drawHypeWords(ctx, containerRect) {
     });
 }
 
-async function handleCapture() {
-    // Add visual feedback
-    captureBtn.disabled = true;
-    captureBtn.innerHTML = '<span class="icon">⏳</span><span class="text">CAPTURING...</span>';
-
-    // Flash effect
+function createFlashEffect() {
     const flash = document.createElement('div');
     flash.style.cssText = `
         position: fixed;
@@ -378,7 +616,6 @@ async function handleCapture() {
     `;
     document.body.appendChild(flash);
 
-    // Add flash animation
     const style = document.createElement('style');
     style.textContent = `
         @keyframes flash {
@@ -388,72 +625,186 @@ async function handleCapture() {
     `;
     document.head.appendChild(style);
 
-    setTimeout(() => flash.remove(), 300);
-
-    try {
-        // Capture the image
-        const blob = await captureHype();
-
-        // Auto download
-        downloadImage(blob);
-
-        // Clear all hype words after capture
-        clearAllHypeWords();
-
-        // Show share popup
-        showSharePopup(blob);
-
-    } catch (error) {
-        console.error('Capture error:', error);
-        alert('Failed to capture. Please try again!');
-    }
-
-    // Reset button
-    captureBtn.disabled = false;
-    captureBtn.innerHTML = '<span class="icon">📸</span><span class="text">CAPTURE MY HYPE</span>';
+    setTimeout(() => {
+        flash.remove();
+        style.remove();
+    }, 300);
 }
 
-function downloadImage(blob) {
+// ========================================
+// VIDEO RECORDING
+// ========================================
+async function createVideo() {
+    if (isRecording) return;
+
+    isRecording = true;
+    videoBtn.disabled = true;
+    videoBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Recording...</span><span class="btn-duration">5s</span>';
+    recordingIndicator.classList.remove('hidden');
+
+    const duration = 5000; // 5 seconds
+    const fps = 30;
+    const chunks = [];
+
+    // Setup canvas stream
+    const ctx = captureCanvas.getContext('2d');
+    const containerRect = canvasWrapper.getBoundingClientRect();
+
+    captureCanvas.width = containerRect.width;
+    captureCanvas.height = containerRect.height;
+
+    const canvasStream = captureCanvas.captureStream(fps);
+
+    // Add audio if available
+    if (audioElement) {
+        try {
+            const audioCtx = new AudioContext();
+            const source = audioCtx.createMediaElementSource(audioElement);
+            const dest = audioCtx.createMediaStreamDestination();
+            source.connect(dest);
+            source.connect(audioCtx.destination);
+
+            canvasStream.addTrack(dest.stream.getAudioTracks()[0]);
+            audioElement.currentTime = 0;
+            audioElement.play();
+        } catch (e) {
+            console.log('Audio context issue:', e);
+        }
+    }
+
+    // Setup recorder
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : 'video/webm';
+
+    mediaRecorder = new MediaRecorder(canvasStream, { mimeType });
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+            chunks.push(e.data);
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        currentBlob = blob;
+        currentBlobType = 'video';
+
+        downloadFile(blob, 'comic-video.webm');
+        showSuccessPopup(blob, 'video');
+
+        if (audioElement) {
+            audioElement.pause();
+        }
+
+        isRecording = false;
+        videoBtn.disabled = false;
+        videoBtn.innerHTML = '<span class="btn-icon">🎬</span><span class="btn-text">Create Video</span><span class="btn-duration">5s</span>';
+        recordingIndicator.classList.add('hidden');
+    };
+
+    // Start recording
+    mediaRecorder.start();
+
+    // Render frames
+    const startTime = performance.now();
+
+    function renderFrame() {
+        if (!isRecording) return;
+
+        // Get the active media element
+        let mediaElement;
+        if (currentMode === 'live') {
+            mediaElement = webcamEl;
+        } else if (uploadedMediaType === 'video') {
+            mediaElement = uploadedVideoEl;
+        } else {
+            mediaElement = uploadedImageEl;
+        }
+
+        // Clear and draw
+        ctx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+
+        ctx.save();
+        if (currentMode === 'live') {
+            ctx.translate(containerRect.width, 0);
+            ctx.scale(-1, 1);
+        }
+        ctx.filter = 'contrast(1.4) saturate(0.3) brightness(1.1)';
+        ctx.drawImage(mediaElement, 0, 0, containerRect.width, containerRect.height);
+        ctx.restore();
+
+        // Draw overlays
+        drawHalftoneOverlay(ctx, containerRect.width, containerRect.height);
+        drawVignette(ctx, containerRect.width, containerRect.height);
+        drawHypeWords(ctx, containerRect);
+
+        // Check if we should continue
+        if (performance.now() - startTime < duration) {
+            requestAnimationFrame(renderFrame);
+        } else {
+            mediaRecorder.stop();
+        }
+    }
+
+    renderFrame();
+}
+
+// ========================================
+// SUCCESS POPUP
+// ========================================
+function showSuccessPopup(blob, type) {
+    const url = URL.createObjectURL(blob);
+
+    if (type === 'video') {
+        previewImage.classList.add('hidden');
+        previewVideo.classList.remove('hidden');
+        previewVideo.src = url;
+    } else {
+        previewVideo.classList.add('hidden');
+        previewImage.classList.remove('hidden');
+        previewImage.src = url;
+    }
+
+    instagramHint.classList.add('hidden');
+    successPopup.classList.remove('hidden');
+}
+
+function hideSuccessPopup() {
+    successPopup.classList.add('hidden');
+    instagramHint.classList.add('hidden');
+}
+
+// ========================================
+// DOWNLOAD & SHARE
+// ========================================
+function downloadFile(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'my-hype.png';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
-// ========================================
-// SHARE POPUP SYSTEM
-// ========================================
-function showSharePopup(blob) {
-    const url = URL.createObjectURL(blob);
-    previewImage.src = url;
-    sharePopup.classList.remove('hidden');
-    instagramHint.classList.add('hidden');
-}
-
-function hideSharePopup() {
-    sharePopup.classList.add('hidden');
-    instagramHint.classList.add('hidden');
-}
-
 async function shareToWhatsApp() {
-    if (navigator.share && currentImageBlob) {
+    if (navigator.share && currentBlob) {
         try {
-            const file = new File([currentImageBlob], 'my-hype.png', { type: 'image/png' });
+            const extension = currentBlobType === 'video' ? 'webm' : 'png';
+            const mimeType = currentBlobType === 'video' ? 'video/webm' : 'image/png';
+            const file = new File([currentBlob], `comic-${currentBlobType}.${extension}`, { type: mimeType });
 
             await navigator.share({
-                title: 'My Hype-Man Moment! 🔥',
-                text: 'Check out my epic comic-book look!',
+                title: 'My Comic Masterpiece! 🔥',
+                text: 'Check out my epic comic-book creation from Hype-Man Studio!',
                 files: [file]
             });
 
             console.log('Shared successfully!');
         } catch (error) {
             if (error.name !== 'AbortError') {
-                // Fallback to WhatsApp web
                 fallbackWhatsAppShare();
             }
         }
@@ -463,27 +814,30 @@ async function shareToWhatsApp() {
 }
 
 function fallbackWhatsAppShare() {
-    const message = encodeURIComponent(`Check out my Hype-Man look! 🔥💥 ${websiteUrl}`);
+    const message = encodeURIComponent(`Check out my Comic creation! 🔥💥 ${websiteUrl}`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
 }
 
 function handleInstagramShare() {
-    // Download the image
-    if (currentImageBlob) {
-        downloadImage(currentImageBlob);
+    if (currentBlob) {
+        const extension = currentBlobType === 'video' ? 'webm' : 'png';
+        downloadFile(currentBlob, `comic-${currentBlobType}.${extension}`);
     }
 
-    // Show the hint
-    instagramHint.classList.remove('hidden');
+    // Copy link to clipboard
+    navigator.clipboard.writeText(websiteUrl).then(() => {
+        instagramHint.classList.remove('hidden');
+    }).catch(() => {
+        instagramHint.innerHTML = `✅ Saved! Add our link to your Instagram Story: <strong>${websiteUrl}</strong>`;
+        instagramHint.classList.remove('hidden');
+    });
 }
 
-// ========================================
-// WHATSAPP BRIDGE (Pre-filled message)
-// ========================================
-function setupWhatsAppBridge() {
-    const message = encodeURIComponent(`Check out my Hype-Man look! 🔥💥 ${websiteUrl}`);
-    whatsappBridge.href = `https://wa.me/?text=${message}`;
-    whatsappBridge.target = '_blank';
+function downloadAgain() {
+    if (currentBlob) {
+        const extension = currentBlobType === 'video' ? 'webm' : 'png';
+        downloadFile(currentBlob, `comic-${currentBlobType}.${extension}`);
+    }
 }
 
 // ========================================
@@ -495,62 +849,85 @@ function initEventListeners() {
         welcomeStartBtn.addEventListener('click', hideWelcomePopup);
     }
 
-    // Spawn hype word
-    spawnBtn.addEventListener('click', handleHypeInput);
+    // Mode toggle
+    liveModeBtn.addEventListener('click', () => setMode('live'));
+    editorModeBtn.addEventListener('click', () => setMode('editor'));
+
+    // Media upload
+    uploadMediaBtn.addEventListener('click', () => mediaInput.click());
+    mediaInput.addEventListener('change', handleMediaUpload);
+    if (removeMediaBtn) {
+        removeMediaBtn.addEventListener('click', removeUploadedMedia);
+    }
+
+    // Music upload
+    uploadMusicBtn.addEventListener('click', () => musicInput.click());
+    musicInput.addEventListener('change', handleMusicUpload);
+    playPauseBtn.addEventListener('click', toggleMusicPlayback);
+    removeMusicBtn.addEventListener('click', removeMusic);
+
+    // Hype text
+    addTextBtn.addEventListener('click', handleHypeInput);
     hypeInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             handleHypeInput();
         }
     });
 
-    // Clear all words
+    // Quick effects
+    effectBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const text = btn.dataset.text;
+            spawnHypeWord(text);
+        });
+    });
+
+    // Clear all
     if (clearAllBtn) {
         clearAllBtn.addEventListener('click', clearAllHypeWords);
     }
 
     // Capture
-    captureBtn.addEventListener('click', handleCapture);
+    photoBtn.addEventListener('click', capturePhoto);
+    videoBtn.addEventListener('click', createVideo);
 
-    // Share popup
-    closePopupBtn.addEventListener('click', hideSharePopup);
-    sharePopup.addEventListener('click', (e) => {
-        if (e.target === sharePopup) {
-            hideSharePopup();
+    // Success popup
+    closePopupBtn.addEventListener('click', hideSuccessPopup);
+    successPopup.addEventListener('click', (e) => {
+        if (e.target === successPopup) {
+            hideSuccessPopup();
         }
     });
 
     // Share buttons
     shareWhatsappBtn.addEventListener('click', shareToWhatsApp);
     shareInstagramBtn.addEventListener('click', handleInstagramShare);
+    downloadAgainBtn.addEventListener('click', downloadAgain);
+
+    // Quick WhatsApp share
+    if (whatsappQuickBtn) {
+        whatsappQuickBtn.addEventListener('click', () => {
+            const message = encodeURIComponent(`Check out Hype-Man Studio! 🔥💥 ${websiteUrl}`);
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        });
+    }
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            hideSharePopup();
+            hideSuccessPopup();
             hideWelcomePopup();
         }
-        if (e.key === ' ' && document.activeElement !== hypeInput && welcomePopup.classList.contains('hidden')) {
+        // Spacebar to capture (when not typing)
+        if (e.key === ' ' && document.activeElement !== hypeInput &&
+            welcomePopup.classList.contains('hidden') && !isRecording) {
             e.preventDefault();
-            handleCapture();
+            capturePhoto();
         }
     });
 }
 
 // ========================================
-// INITIALIZATION
+// START THE APP
 // ========================================
-async function init() {
-    console.log('🚀 Hype-Man Studio initializing...');
-
-    await initCamera();
-    initEventListeners();
-    setupWhatsAppBridge();
-
-    // Check for first visit
-    checkFirstVisit();
-
-    console.log('✅ Hype-Man Studio ready!');
-}
-
-// Start the app
 init();
