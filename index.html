@@ -29,12 +29,71 @@
 </head>
 
 <body>
+    <!-- Ambient Background Glow -->
+    <div class="ambient-glow"></div>
+
+    <!-- History Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Time-Capsule History Sidebar -->
+    <aside id="history-sidebar" class="history-sidebar">
+        <div class="sidebar-header">
+            <h2>📅 Your Journey</h2>
+            <button id="close-sidebar" class="close-sidebar-btn" aria-label="Close sidebar">×</button>
+        </div>
+        
+        <!-- Focus Heatmap -->
+        <div class="focus-heatmap glass-card">
+            <h3>⚡ Peak Focus Hours</h3>
+            <p class="heatmap-subtitle">When you're most productive</p>
+            <div id="heatmap-grid" class="heatmap-grid">
+                <!-- 24 hour blocks will be rendered by JS -->
+            </div>
+            <div class="heatmap-legend">
+                <span>Less</span>
+                <div class="legend-blocks">
+                    <span class="legend-block" style="opacity: 0.2"></span>
+                    <span class="legend-block" style="opacity: 0.4"></span>
+                    <span class="legend-block" style="opacity: 0.6"></span>
+                    <span class="legend-block" style="opacity: 0.8"></span>
+                    <span class="legend-block" style="opacity: 1"></span>
+                </div>
+                <span>More</span>
+            </div>
+        </div>
+
+        <!-- History List -->
+        <div class="history-section">
+            <h3>📚 Completed Days</h3>
+            <div id="history-list" class="history-list">
+                <!-- History entries will render here -->
+            </div>
+            <div id="history-empty" class="history-empty">
+                <span>🕐</span>
+                <p>No history yet</p>
+                <span class="hint">Complete a day to see your journey</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="confetti-container"></div>
+
     <div id="app">
         <!-- Header -->
         <header class="app-header">
-            <div class="logo">
-                <span class="logo-icon">📋</span>
-                <h1>Daily Stack</h1>
+            <div class="header-row">
+                <button id="history-btn" class="icon-btn history-btn" aria-label="View history">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <span class="logo-icon">📋</span>
+                    <h1>Daily Stack</h1>
+                </div>
+                <div class="header-spacer"></div>
             </div>
             <p class="tagline">Focus on what matters</p>
         </header>
@@ -51,8 +110,18 @@
                     <span class="percent-sign">%</span>
                 </div>
             </div>
-            <div class="progress-stats">
-                <span id="completed-count">0</span> of <span id="total-count">0</span> completed
+            <div class="progress-info">
+                <div class="progress-stats">
+                    <span id="completed-count">0</span> of <span id="total-count">0</span> completed
+                </div>
+                <button id="clear-day-btn" class="clear-day-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18"></path>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    </svg>
+                    Clear Day
+                </button>
             </div>
         </div>
 
