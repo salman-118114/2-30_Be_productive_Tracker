@@ -1,0 +1,41 @@
+{
+    "name": "Daily Stack",
+    "short_name": "Daily Stack",
+    "description": "A minimalist to-do app for your daily tasks. Focus on what matters.",
+    "start_url": "/index.html",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "portrait",
+    "categories": ["productivity", "utilities"],
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Add Task",
+            "short_name": "Add",
+            "description": "Quickly add a new task",
+            "url": "/index.html?action=add",
+            "icons": [
+                {
+                    "src": "icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}
