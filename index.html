@@ -3,13 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>Comic Media Editor | Hype-Man Studio</title>
     <meta name="description"
         content="Transform your photos and videos into comic book masterpieces with Hype-Man Studio. Add epic POW and BOOM effects, music, and share instantly!">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:wght@400;500;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -181,9 +181,30 @@
                 </div>
             </div>
 
+            <!-- Filters -->
+            <div class="section-group">
+                <h3 class="section-title">🎨 Filters</h3>
+                <div class="filter-grid">
+                    <button class="filter-btn active" data-filter="default">Default</button>
+                    <button class="filter-btn" data-filter="indie-comic">Indie Comic</button>
+                    <button class="filter-btn" data-filter="pop-art">Pop Art</button>
+                    <button class="filter-btn" data-filter="classic-noir">Classic Noir</button>
+                </div>
+            </div>
+
+            <!-- Font Selection -->
+            <div class="section-group">
+                <h3 class="section-title">🔤 Font Style</h3>
+                <button id="font-cycle-btn" class="font-cycle-btn">
+                    <span class="font-preview">Aa</span>
+                    <span id="current-font-name">Bangers</span>
+                    <span class="cycle-arrow">→</span>
+                </button>
+            </div>
+
             <!-- Actions -->
             <div class="section-group">
-                <h3 class="section-title">🎨 Actions</h3>
+                <h3 class="section-title">⚙️ Actions</h3>
                 <button id="clear-all-btn" class="action-btn danger">
                     <span>🗑️</span> Clear All Text
                 </button>

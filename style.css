@@ -353,7 +353,8 @@ body {
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    background: var(--bg-dark);
 }
 
 #webcam {
@@ -629,6 +630,99 @@ body {
     background: var(--comic-red);
     border-color: var(--comic-red);
     color: white;
+}
+
+/* ========================================
+   FILTER GRID
+======================================== */
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.filter-btn {
+    padding: 12px 8px;
+    background: var(--surface-elevated);
+    border: 2px solid var(--border-subtle);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--neon-magenta);
+    color: var(--neon-magenta);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+    border-color: var(--neon-magenta);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 0, 170, 0.3);
+}
+
+/* ========================================
+   FONT CYCLE BUTTON
+======================================== */
+
+.font-cycle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--surface-elevated);
+    border: 2px solid var(--neon-yellow);
+    border-radius: var(--border-radius-sm);
+    color: var(--comic-white);
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.font-cycle-btn:hover {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.font-cycle-btn .font-preview {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--neon-yellow);
+}
+
+.font-cycle-btn #current-font-name {
+    flex: 1;
+    text-align: center;
+    color: var(--neon-cyan);
+}
+
+.font-cycle-btn .cycle-arrow {
+    font-size: 1.2rem;
+    color: var(--neon-magenta);
+    animation: arrowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(5px);
+    }
 }
 
 /* Sidebar Share Buttons */
@@ -1230,6 +1324,24 @@ body {
     color: var(--bg-dark);
 }
 
+/* Enhanced Mobile Share Buttons */
+@media (max-width: 768px) {
+    .share-btn {
+        padding: 18px 28px;
+        font-size: 1.1rem;
+        min-height: 60px;
+    }
+
+    .share-btn:active {
+        transform: scale(0.95);
+    }
+
+    .share-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+}
+
 .hint {
     margin-top: 15px;
     padding: 12px 16px;
@@ -1520,4 +1632,52 @@ body {
     border-top-color: var(--neon-magenta);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+/* ========================================
+   MOBILE KEYBOARD & INPUT FIXES
+======================================== */
+
+/* Safe area insets for iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    #right-sidebar {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Mobile input visibility fix */
+@media (max-width: 900px) {
+    #right-sidebar {
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(180deg, var(--surface) 0%, var(--bg-darker) 100%);
+        z-index: 100;
+        padding-bottom: 20px;
+    }
+
+    .text-input-group {
+        position: relative;
+    }
+
+    #hype-input:focus {
+        position: relative;
+        z-index: 101;
+    }
+}
+
+/* Filter preview on media */
+.filter-indie-comic {
+    filter: grayscale(100%) contrast(1.4) brightness(1.1) !important;
+}
+
+.filter-pop-art {
+    filter: saturate(2) contrast(1.3) brightness(1.1) !important;
+}
+
+.filter-classic-noir {
+    filter: grayscale(100%) contrast(1.8) brightness(0.9) !important;
+}
+
+.filter-default {
+    filter: contrast(1.4) saturate(0.3) brightness(1.1) !important;
 }

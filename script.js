@@ -82,6 +82,19 @@ let mediaRecorder = null;
 const websiteUrl = 'https://hypeman-studio.app';
 const wordStyles = ['pow', 'boom', 'zap', 'bubble'];
 
+// Font system
+const fonts = ['Bangers', 'Impact', 'Bebas Neue'];
+let currentFontIndex = 0;
+
+// Filter system
+const filters = {
+    'default': 'contrast(1.4) saturate(0.3) brightness(1.1)',
+    'indie-comic': 'grayscale(100%) contrast(1.4) brightness(1.1)',
+    'pop-art': 'saturate(2) contrast(1.3) brightness(1.1)',
+    'classic-noir': 'grayscale(100%) contrast(1.8) brightness(0.9)'
+};
+let currentFilter = 'default';
+
 // ========================================
 // INITIALIZATION
 // ========================================
@@ -129,11 +142,18 @@ async function initCamera() {
         });
 
         webcamEl.srcObject = stream;
+
+        // Wait for metadata to get accurate dimensions
+        webcamEl.onloadedmetadata = () => {
+            filterCanvas.width = webcamEl.videoWidth || 1920;
+            filterCanvas.height = webcamEl.videoHeight || 1080;
+
+            // Update canvas wrapper aspect ratio to match camera
+            const aspectRatio = webcamEl.videoWidth / webcamEl.videoHeight;
+            canvasWrapper.style.aspectRatio = `${aspectRatio}`;
+        };
+
         await webcamEl.play();
-
-        filterCanvas.width = webcamEl.videoWidth || 1920;
-        filterCanvas.height = webcamEl.videoHeight || 1080;
-
         console.log('📸 Camera initialized successfully!');
 
     } catch (error) {
@@ -317,10 +337,11 @@ function spawnHypeWord(text) {
     word.style.top = `${y}%`;
     word.style.setProperty('--rotation', `${rotation}deg`);
 
-    // Create text span
+    // Create text span with current font
     const textSpan = document.createElement('span');
     textSpan.className = 'hype-text';
     textSpan.textContent = text;
+    textSpan.style.fontFamily = `'${getCurrentFont()}', cursive`;
     word.appendChild(textSpan);
 
     // Create remove button
@@ -427,6 +448,84 @@ function clearAllHypeWords() {
 }
 
 // ========================================
+// FILTER SYSTEM
+// ========================================
+function setFilter(filterName) {
+    currentFilter = filterName;
+
+    // Update filter buttons UI
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filterName);
+    });
+
+    // Apply filter class to media elements for live preview
+    const mediaElements = [webcamEl, uploadedVideoEl, uploadedImageEl];
+    const filterClasses = ['filter-default', 'filter-indie-comic', 'filter-pop-art', 'filter-classic-noir'];
+
+    mediaElements.forEach(el => {
+        filterClasses.forEach(cls => el.classList.remove(cls));
+        el.classList.add(`filter-${filterName}`);
+    });
+
+    console.log(`🎨 Filter applied: ${filterName}`);
+}
+
+// ========================================
+// FONT SYSTEM
+// ========================================
+function cycleFont() {
+    currentFontIndex = (currentFontIndex + 1) % fonts.length;
+    const newFont = fonts[currentFontIndex];
+
+    // Update button display
+    const fontNameEl = document.getElementById('current-font-name');
+    const fontPreviewEl = document.querySelector('.font-preview');
+    if (fontNameEl) {
+        fontNameEl.textContent = newFont;
+        fontNameEl.style.fontFamily = `'${newFont}', cursive`;
+    }
+    if (fontPreviewEl) {
+        fontPreviewEl.style.fontFamily = `'${newFont}', cursive`;
+    }
+
+    // Update existing hype words
+    const words = hypeContainer.querySelectorAll('.hype-word .hype-text');
+    words.forEach(word => {
+        word.style.fontFamily = `'${newFont}', cursive`;
+    });
+
+    console.log(`🔤 Font changed to: ${newFont}`);
+}
+
+function getCurrentFont() {
+    return fonts[currentFontIndex];
+}
+
+// ========================================
+// MOBILE INPUT HANDLING
+// ========================================
+function initMobileInputHandling() {
+    if (hypeInput) {
+        hypeInput.addEventListener('focus', () => {
+            // Scroll input into view on mobile
+            setTimeout(() => {
+                hypeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+
+        // Handle virtual keyboard on mobile
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                if (document.activeElement === hypeInput) {
+                    hypeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+    }
+}
+
+// ========================================
 // LIVE PREVIEW ANIMATION
 // ========================================
 function startLivePreviewAnimation() {
@@ -481,11 +580,11 @@ async function capturePhoto() {
 }
 
 async function renderToBlob() {
-    const ctx = captureCanvas.getContext('2d');
+    const ctx = captureCanvas.getContext('2d', { willReadFrequently: true });
     const containerRect = canvasWrapper.getBoundingClientRect();
 
-    // Higher resolution
-    const scale = 2;
+    // Use device pixel ratio for HD quality (capped at 3x for performance)
+    const scale = Math.min(window.devicePixelRatio || 1, 3);
     captureCanvas.width = containerRect.width * scale;
     captureCanvas.height = containerRect.height * scale;
     ctx.scale(scale, scale);
@@ -500,14 +599,40 @@ async function renderToBlob() {
         mediaElement = uploadedImageEl;
     }
 
-    // Draw media (mirrored for webcam)
+    // Calculate dimensions to maintain aspect ratio (contain fit)
+    const mediaWidth = mediaElement.videoWidth || mediaElement.naturalWidth || containerRect.width;
+    const mediaHeight = mediaElement.videoHeight || mediaElement.naturalHeight || containerRect.height;
+    const mediaAspect = mediaWidth / mediaHeight;
+    const containerAspect = containerRect.width / containerRect.height;
+
+    let drawWidth, drawHeight, drawX, drawY;
+    if (mediaAspect > containerAspect) {
+        // Media is wider - fit to width
+        drawWidth = containerRect.width;
+        drawHeight = containerRect.width / mediaAspect;
+        drawX = 0;
+        drawY = (containerRect.height - drawHeight) / 2;
+    } else {
+        // Media is taller - fit to height
+        drawHeight = containerRect.height;
+        drawWidth = containerRect.height * mediaAspect;
+        drawX = (containerRect.width - drawWidth) / 2;
+        drawY = 0;
+    }
+
+    // Fill background
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, containerRect.width, containerRect.height);
+
+    // Draw media (mirrored for webcam) with current filter
     ctx.save();
     if (currentMode === 'live') {
         ctx.translate(containerRect.width, 0);
         ctx.scale(-1, 1);
+        drawX = containerRect.width - drawX - drawWidth;
     }
-    ctx.filter = 'contrast(1.4) saturate(0.3) brightness(1.1)';
-    ctx.drawImage(mediaElement, 0, 0, containerRect.width, containerRect.height);
+    ctx.filter = filters[currentFilter];
+    ctx.drawImage(mediaElement, drawX, drawY, drawWidth, drawHeight);
     ctx.restore();
 
     // Draw overlays
@@ -580,7 +705,9 @@ async function drawHypeWords(ctx, containerRect) {
         ctx.translate(x, y);
         ctx.rotate(rotation);
 
-        ctx.font = `bold ${parseInt(style.fontSize)}px Bangers, cursive`;
+        // Use the current font for rendering
+        const fontFamily = textSpan ? textSpan.style.fontFamily || `'${getCurrentFont()}', cursive` : `'${getCurrentFont()}', cursive`;
+        ctx.font = `bold ${parseInt(style.fontSize)}px ${fontFamily}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -730,7 +857,7 @@ async function createVideo() {
             ctx.translate(containerRect.width, 0);
             ctx.scale(-1, 1);
         }
-        ctx.filter = 'contrast(1.4) saturate(0.3) brightness(1.1)';
+        ctx.filter = filters[currentFilter];
         ctx.drawImage(mediaElement, 0, 0, containerRect.width, containerRect.height);
         ctx.restore();
 
@@ -886,6 +1013,24 @@ function initEventListeners() {
     if (clearAllBtn) {
         clearAllBtn.addEventListener('click', clearAllHypeWords);
     }
+
+    // Filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filterName = btn.dataset.filter;
+            setFilter(filterName);
+        });
+    });
+
+    // Font cycle button
+    const fontCycleBtn = document.getElementById('font-cycle-btn');
+    if (fontCycleBtn) {
+        fontCycleBtn.addEventListener('click', cycleFont);
+    }
+
+    // Initialize mobile input handling
+    initMobileInputHandling();
 
     // Capture
     photoBtn.addEventListener('click', capturePhoto);
